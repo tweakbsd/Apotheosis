@@ -38,9 +38,15 @@ public class DefenseEnchant extends ProtectionEnchantment {
 		if (this == Enchantments.FEATHER_FALLING) return ench != this;
 		if (this == Enchantments.PROTECTION) return ench != this;
 		if (ench instanceof ProtectionEnchantment) {
-			ProtectionEnchantment pEnch = (ProtectionEnchantment) ench;
 			if (ench == this) return false;
-			return pEnch.protectionType == Type.ALL || pEnch.protectionType == Type.FALL;
+
+			ProtectionEnchantment pEnch = (ProtectionEnchantment) ench;
+			if (pEnch.protectionType == Type.FALL) return true;
+			if (this.protectionType == pEnch.protectionType) return false;  // NOTE:
+			// NOTE: Apotheosis original value
+			// return pEnch.protectionType == Type.ALL || pEnch.protectionType == Type.FALL;
+
+			return false;
 		}
 		if (ench == ApotheosisObjects.MAGIC_PROTECTION) return false;
 		return ench != this;

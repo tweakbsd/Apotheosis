@@ -61,13 +61,13 @@ public class ApotheosisObjects {
 	public static final HellInfusionEnchantment HELL_INFUSION = null;
 	public static final MinersFervorEnchant DEPTH_MINER = null;
 	public static final StableFootingEnchant STABLE_FOOTING = null;
-	public static final ScavengerEnchant SCAVENGER = null;
-	public static final LifeMendingEnchant LIFE_MENDING = null;
+	//public static final ScavengerEnchant SCAVENGER = null;
+	//public static final LifeMendingEnchant LIFE_MENDING = null;
 	public static final IcyThornsEnchant ICY_THORNS = null;
 	public static final TemptingEnchant TEMPTING = null;
 	public static final ShieldBashEnchant SHIELD_BASH = null;
 	public static final ReflectiveEnchant REFLECTIVE = null;
-	public static final BerserkersFuryEnchant BERSERK = null;
+	//public static final BerserkersFuryEnchant BERSERK = null;
 	public static final CapturingEnchant CAPTURING = null;
 	public static final TrueInfinityEnchant TRUE_INFINITY = null;
 	public static final Potion RESISTANCE = null;
@@ -94,8 +94,8 @@ public class ApotheosisObjects {
 	public static final Potion STRONG_SUNDERING = null;
 	public static final KnowledgeEnchant KNOWLEDGE = null;
 	public static final SplittingEnchant SPLITTING = null;
-	public static final NaturesBlessingEnchant NATURES_BLESSING = null;
-	public static final ReboundingEnchant REBOUNDING = null;
+	//public static final NaturesBlessingEnchant NATURES_BLESSING = null;
+	//public static final ReboundingEnchant REBOUNDING = null;
 	public static final TomeItem NULL_BOOK = null;
 	public static final TomeItem ARMOR_HEAD_BOOK = null;
 	public static final TomeItem ARMOR_CHEST_BOOK = null;

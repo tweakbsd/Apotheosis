@@ -102,6 +102,9 @@ public class EnchModuleEvents {
 		if (attacker instanceof PlayerEntity) {
 			PlayerEntity p = (PlayerEntity) attacker;
 			if (p.world.isRemote) return;
+
+
+			/*
 			int scavenger = EnchantmentHelper.getEnchantmentLevel(ApotheosisObjects.SCAVENGER, p.getHeldItemMainhand());
 			if (scavenger > 0 && p.world.rand.nextInt(100) < scavenger * 2.5F) {
 				if (dropLoot == null) {
@@ -109,6 +112,8 @@ public class EnchModuleEvents {
 				}
 				dropLoot.invoke(e.getEntityLiving(), e.getSource(), true);
 			}
+			 */
+
 			int knowledge = EnchantmentHelper.getEnchantmentLevel(ApotheosisObjects.KNOWLEDGE, p.getHeldItemMainhand());
 			if (knowledge > 0 && !(e.getEntity() instanceof PlayerEntity)) {
 				int items = 0;
@@ -133,6 +138,9 @@ public class EnchModuleEvents {
 	 */
 	@SubscribeEvent
 	public void lifeMend(LivingUpdateEvent e) {
+
+
+		/*
 		if (e.getEntity().world.isRemote || e.getEntity().ticksExisted % 20 != 0) return;
 		for (EquipmentSlotType slot : slots) {
 			ItemStack stack = e.getEntityLiving().getItemStackFromSlot(slot);
@@ -146,6 +154,7 @@ public class EnchModuleEvents {
 				}
 			}
 		}
+		 */
 	}
 
 	/**
@@ -173,13 +182,14 @@ public class EnchModuleEvents {
 	 */
 	@SubscribeEvent
 	public void rightClick(PlayerInteractEvent.RightClickBlock e) {
+		/*
 		ItemStack s = e.getItemStack();
 		int nbLevel = EnchantmentHelper.getEnchantmentLevel(ApotheosisObjects.NATURES_BLESSING, s);
 		if (!e.getEntity().isSneaking() && nbLevel > 0 && BoneMealItem.applyBonemeal(s.copy(), e.getWorld(), e.getPos(), e.getPlayer())) {
 			s.damageItem(6 - nbLevel, e.getPlayer(), ent -> ent.sendBreakAnimation(e.getHand()));
 			e.setCanceled(true);
 			e.setCancellationResult(ActionResultType.SUCCESS);
-		}
+		}*/
 	}
 
 	/**
@@ -200,6 +210,8 @@ public class EnchModuleEvents {
 	@SubscribeEvent
 	public void livingHurt(LivingHurtEvent e) {
 		LivingEntity user = e.getEntityLiving();
+
+		/*
 		if (e.getSource().getTrueSource() instanceof Entity && user.getActivePotionEffect(Effects.RESISTANCE) == null) {
 			int level = EnchantmentHelper.getMaxEnchantmentLevel(ApotheosisObjects.BERSERK, user);
 			if (level > 0) {
@@ -209,6 +221,7 @@ public class EnchModuleEvents {
 				user.addPotionEffect(new EffectInstance(Effects.SPEED, 200 * level, level - 1));
 			}
 		}
+		 */
 		if (e.getSource().isMagicDamage() && e.getSource().getTrueSource() instanceof LivingEntity) {
 			LivingEntity src = (LivingEntity) e.getSource().getTrueSource();
 			int lvl = EnchantmentHelper.getMaxEnchantmentLevel(ApotheosisObjects.MAGIC_PROTECTION, src);
