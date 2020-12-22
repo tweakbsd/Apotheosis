@@ -92,7 +92,7 @@ public class RealEnchantmentHelper {
 		Iterator<ArcanaEnchantmentData> iterator = list.iterator();
 
 		while (iterator.hasNext()) {
-			if (!data.enchantment.isCompatibleWith(iterator.next().data.enchantment)) {
+			if (!iterator.next().data.enchantment.isCompatibleWith(data.enchantment)) {
 				iterator.remove();
 			}
 		}

@@ -67,6 +67,18 @@ public class ApothSpawnerBlock extends SpawnerBlock {
 
 	@Override
 	public void harvestBlock(World world, PlayerEntity player, BlockPos pos, BlockState state, TileEntity te, ItemStack stack) {
+
+
+		// NOTE: tweakbsd added
+		CompoundNBT nbt = te != null ? te.getTileData() : null;
+
+		System.out.println("APOTHEOSIS ApothSpawnerBlock harvesBlock() TileEntity NBT: " + (nbt != null ? nbt.toString() : "??"));
+
+		if(te != null && te.getClass().getTypeName().equals("TileEntityDreadSpawner")) {
+			System.out.println("APOTHEOSIS deteted TileEntityDreadSpawner from Ice Adn Fire Mod");
+		}
+
+
 		if (SpawnerModule.spawnerSilkLevel != -1 && EnchantmentHelper.getEnchantmentLevel(Enchantments.SILK_TOUCH, stack) >= SpawnerModule.spawnerSilkLevel) {
 			ItemStack s = new ItemStack(this);
 			if (te != null) te.write(s.getOrCreateChildTag("BlockEntityTag"));
@@ -93,6 +105,7 @@ public class ApothSpawnerBlock extends SpawnerBlock {
 	public ActionResultType onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
 		ItemStack stack = player.getHeldItem(hand);
 		TileEntity te = world.getTileEntity(pos);
+
 		if (te instanceof ApothSpawnerTile) {
 			ApothSpawnerTile tile = (ApothSpawnerTile) te;
 			boolean inverse = SpawnerModifiers.inverseItem.test(player.getHeldItem(hand == Hand.MAIN_HAND ? Hand.OFF_HAND : Hand.MAIN_HAND));

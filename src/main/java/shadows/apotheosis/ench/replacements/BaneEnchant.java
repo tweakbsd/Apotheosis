@@ -37,15 +37,33 @@ public class BaneEnchant extends DamageEnchantment {
 
 	@Override
 	public float calcDamageByCreature(int level, CreatureAttribute attrib) {
+		// NOTE: tweakbsd restored vanilla calc
+		if (this.damageType == 0) {
+			return 1.0F + (float)Math.max(0, level - 1) * 0.5F;
+		} else if (this.damageType == 1 && attrib == CreatureAttribute.UNDEAD) {
+			return (float)level * 2.5F;
+		} else {
+			return this.damageType == 2 && attrib == CreatureAttribute.ARTHROPOD ? (float)level * 2.5F : 0.0F;
+		}
+
+
+		/*
 		if (this.attrib == CreatureAttribute.UNDEFINED) return 1 + level * 0.5F;
 		if (this.attrib == attrib) return level * 1.5F;
-		return 0;
+			return 0;
+		 */
+
 	}
 
 	@Override
 	public boolean canApplyTogether(Enchantment ench) {
-		if (this.attrib == CreatureAttribute.UNDEFINED) return ench != this;
-		return ench == Enchantments.SHARPNESS ? ench != this : !(ench instanceof BaneEnchant);
+
+		// NOTE: tweakbsd added only 1 BaneEnchant allowed!
+		return !(ench instanceof BaneEnchant);
+
+		// NOTE: Apoth original code
+		//if (this.attrib == CreatureAttribute.UNDEFINED) return ench != this;
+		//return ench == Enchantments.SHARPNESS ? ench != this : !(ench instanceof BaneEnchant);
 	}
 
 	/**
@@ -53,6 +71,8 @@ public class BaneEnchant extends DamageEnchantment {
 	*/
 	@Override
 	public void onEntityDamaged(LivingEntity user, Entity target, int level) {
+		// NOTE: removed slowness effect when dealing damage! Btw, it's mentionend nowhere in the mod description.
+		/*
 		if (target instanceof LivingEntity) {
 			LivingEntity livingentity = (LivingEntity) target;
 			if (this.attrib != CreatureAttribute.UNDEFINED && livingentity.getCreatureAttribute() == this.attrib) {
@@ -60,6 +80,9 @@ public class BaneEnchant extends DamageEnchantment {
 				livingentity.addPotionEffect(new EffectInstance(Effects.SLOWNESS, i, 3));
 			}
 		}
+		*/
+
+
 
 	}
 }

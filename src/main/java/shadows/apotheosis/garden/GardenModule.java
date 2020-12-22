@@ -26,7 +26,7 @@ public class GardenModule {
 	@SubscribeEvent
 	public void setup(FMLCommonSetupEvent e) {
 		reload(null);
-		Apotheosis.HELPER.addShapeless(ApotheosisObjects.FARMERS_LEASH, Items.ENDER_PEARL, Items.LEAD, Items.GOLD_INGOT);
+		//Apotheosis.HELPER.addShapeless(ApotheosisObjects.FARMERS_LEASH, Items.ENDER_PEARL, Items.LEAD, Items.GOLD_INGOT);
 		MinecraftForge.EVENT_BUS.addListener(this::reload);
 	}
 
@@ -39,7 +39,8 @@ public class GardenModule {
 
 	@SubscribeEvent
 	public void items(Register<Item> e) {
-		e.getRegistry().register(new EnderLeashItem().setRegistryName("farmers_leash"));
+		// NOTE: tweakbsd removed farmers
+		//e.getRegistry().register(new EnderLeashItem().setRegistryName("farmers_leash"));
 		ComposterBlock.CHANCES.put(Blocks.CACTUS.asItem(), 0.5F);
 		ComposterBlock.CHANCES.put(Blocks.SUGAR_CANE.asItem(), 0.5F);
 	}

@@ -116,7 +116,7 @@ public class ApotheosisObjects {
 	public static final LuckyFootItem LUCKY_FOOT = null;
 	public static final MagicProtEnchant MAGIC_PROTECTION = null;
 	public static final ScrappingTomeItem SCRAP_TOME = null;
-	public static final EnderLeashItem FARMERS_LEASH = null;
+	//public static final EnderLeashItem FARMERS_LEASH = null;
 	public static final TileEntityType<AnvilTile> ANVIL = null;
 	@ObjectHolder("apotheosis:prismatic_altar")
 	public static final TileEntityType<SeaAltarTile> ALTAR_TYPE = null;
