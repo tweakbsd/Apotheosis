@@ -261,19 +261,19 @@ public class EnchModule {
 				//new ReboundingEnchant().setRegistryName(Apotheosis.MODID, "rebounding"),
 				new MagicProtEnchant().setRegistryName(Apotheosis.MODID, "magic_protection"),
 				new SeaInfusionEnchantment().setRegistryName("sea_infusion"),
-				new BaneEnchant(Rarity.UNCOMMON, CreatureAttribute.ARTHROPOD, EquipmentSlotType.MAINHAND).setRegistryName("minecraft", "bane_of_arthropods"),
-				new BaneEnchant(Rarity.UNCOMMON, CreatureAttribute.UNDEAD, EquipmentSlotType.MAINHAND).setRegistryName("minecraft", "smite"),
-				new BaneEnchant(Rarity.COMMON, CreatureAttribute.UNDEFINED, EquipmentSlotType.MAINHAND).setRegistryName("minecraft", "sharpness"),
+				//new BaneEnchant(Rarity.UNCOMMON, CreatureAttribute.ARTHROPOD, EquipmentSlotType.MAINHAND).setRegistryName("minecraft", "bane_of_arthropods"),
+				//new BaneEnchant(Rarity.UNCOMMON, CreatureAttribute.UNDEAD, EquipmentSlotType.MAINHAND).setRegistryName("minecraft", "smite"),
+				//new BaneEnchant(Rarity.COMMON, CreatureAttribute.UNDEFINED, EquipmentSlotType.MAINHAND).setRegistryName("minecraft", "sharpness"),
 
 				// NOTE: tweakbsd added own Looting class to allow enchanting of Tridents with looting
 				new LootingEnchantment(Rarity.RARE, EnchModule.WEAPON_OR_TRIDENT, EquipmentSlotType.MAINHAND).setRegistryName("minecraft", "looting"),
 
 				new BaneEnchant(Rarity.UNCOMMON, CreatureAttribute.ILLAGER, EquipmentSlotType.MAINHAND).setRegistryName("bane_of_illagers"),
-				new DefenseEnchant(Rarity.COMMON, ProtectionEnchantment.Type.ALL, ARMOR).setRegistryName("minecraft", "protection"),
-				new DefenseEnchant(Rarity.UNCOMMON, ProtectionEnchantment.Type.ALL, ARMOR).setRegistryName("minecraft", "fire_protection"),
-				new DefenseEnchant(Rarity.RARE, ProtectionEnchantment.Type.ALL, ARMOR).setRegistryName("minecraft", "blast_protection"),
-				new DefenseEnchant(Rarity.UNCOMMON, ProtectionEnchantment.Type.ALL, ARMOR).setRegistryName("minecraft", "projectile_protection"),
-				new DefenseEnchant(Rarity.UNCOMMON, ProtectionEnchantment.Type.ALL, EquipmentSlotType.FEET).setRegistryName("minecraft", "feather_falling"),
+				//new DefenseEnchant(Rarity.COMMON, ProtectionEnchantment.Type.ALL, ARMOR).setRegistryName("minecraft", "protection"),
+				//new DefenseEnchant(Rarity.UNCOMMON, ProtectionEnchantment.Type.ALL, ARMOR).setRegistryName("minecraft", "fire_protection"),
+				//new DefenseEnchant(Rarity.RARE, ProtectionEnchantment.Type.ALL, ARMOR).setRegistryName("minecraft", "blast_protection"),
+				//new DefenseEnchant(Rarity.UNCOMMON, ProtectionEnchantment.Type.ALL, ARMOR).setRegistryName("minecraft", "projectile_protection"),
+				//new DefenseEnchant(Rarity.UNCOMMON, ProtectionEnchantment.Type.ALL, EquipmentSlotType.FEET).setRegistryName("minecraft", "feather_falling"),
 				new ObliterationEnchant().setRegistryName("obliteration"),
 				new CrescendoEnchant().setRegistryName("crescendo")
 				);
