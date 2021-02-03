@@ -1,18 +1,16 @@
 package shadows.apotheosis.village.wanderer;
 
-import java.util.List;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-import net.minecraft.block.Blocks;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.merchant.villager.VillagerTrades.ITrade;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.common.BasicTrade;
 import net.minecraftforge.event.village.WandererTradesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import shadows.apotheosis.ApotheosisObjects;
-import shadows.apotheosis.village.VillageModule;
+import shadows.placebo.config.Configuration;
+import shadows.placebo.util.json.ItemAdapter;
+import shadows.placebo.util.json.NBTAdapter;
 
 /**
  * The wandering merchant sucks.  Trades are totally underwhelming and are borderline garbage 99% of the time.
@@ -133,5 +131,23 @@ public class WandererReplacements {
 		stack.setDisplayName(new TranslationTextComponent("name.apotheosis.vigilance"));
 		goodTrades.add(new BasicTrade(new ItemStack(Items.DIAMOND, 64), new ItemStack(Items.PHANTOM_MEMBRANE, 32), stack, 1, 20, 0));
 
+	public static boolean clearNormTrades = false;
+	public static boolean clearRareTrades = false;
+	public static boolean affixTrades = true;
+
+	public static final Gson GSON = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(BasicTrade.class, BasicTradeAdapter.INSTANCE).registerTypeAdapter(ItemStack.class, ItemAdapter.INSTANCE).registerTypeAdapter(CompoundNBT.class, NBTAdapter.INSTANCE).create();
+
+	@SubscribeEvent
+	public static void replaceWandererArrays(WandererTradesEvent e) {
+		if (clearNormTrades) e.getGenericTrades().clear();
+		if (clearRareTrades) e.getRareTrades().clear();
+		e.getGenericTrades().addAll(WandererTradeManager.INSTANCE.getNormalTrades());
+		e.getRareTrades().addAll(WandererTradeManager.INSTANCE.getRareTrades());
+	}
+
+
+	public static void load(Configuration cfg) {
+		clearNormTrades = cfg.getBoolean("Clear Generic Trades", "wanderer", false, "If the generic trade list will be cleared before datapack loaded trades are added.");
+		clearRareTrades = cfg.getBoolean("Clear Rare Trades", "wanderer", false, "If the rare trade list will be cleared before datapack loaded trades are added.");
 	}
 }

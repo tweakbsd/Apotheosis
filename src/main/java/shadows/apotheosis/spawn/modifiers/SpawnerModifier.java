@@ -3,6 +3,7 @@ package shadows.apotheosis.spawn.modifiers;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.util.LazyValue;
 import shadows.apotheosis.spawn.SpawnerModifiers;
 import shadows.apotheosis.spawn.spawner.ApothSpawnerTile;
 import shadows.placebo.config.Configuration;
@@ -22,7 +23,7 @@ public abstract class SpawnerModifier {
 	/**
 	 * The matching item for this modifier.
 	 */
-	protected Ingredient item;
+	protected LazyValue<Ingredient> item;
 
 	/**
 	 * The amount this modifier changes it's respective stat.
@@ -39,15 +40,20 @@ public abstract class SpawnerModifier {
 	 */
 	protected int max;
 
-	public SpawnerModifier(Ingredient item, int value, int min, int max) {
-		this.item = item;
+	/**
+	 * @param item
+	 * @param value
+	 * @param min
+	 * @param max
+	 */
+	public SpawnerModifier(int value, int min, int max) {
 		this.value = value;
 		this.min = min;
 		this.max = max;
 	}
 
-	public SpawnerModifier(ItemStack item, int value, int min, int max) {
-		this(Ingredient.fromStacks(item), value, min, max);
+	public SpawnerModifier() {
+		this(-1, -1, -1);
 	}
 
 	/**
@@ -58,7 +64,7 @@ public abstract class SpawnerModifier {
 	 * @return If this modifier can act, given the conditions.
 	 */
 	public boolean canModify(ApothSpawnerTile spawner, ItemStack stack, boolean inverting) {
-		return item.test(stack);
+		return item.getValue().test(stack);
 	}
 
 	/**
@@ -74,28 +80,20 @@ public abstract class SpawnerModifier {
 	 * Reads this modifier from config.  Should update all relevant values.
 	 */
 	public void load(Configuration cfg) {
-		String s = cfg.getString(ITEM, getCategory(), getDefaultItem(), "The item that applies this modifier.");
-		item = SpawnerModifiers.readStackCfg(s);
-		value = cfg.getInt(VALUE, getCategory(), value, Integer.MIN_VALUE, Integer.MAX_VALUE, "The amount each item changes this stat.");
-		min = cfg.getInt(MIN, getCategory(), min, Integer.MIN_VALUE, Integer.MAX_VALUE, "The min value of this stat.");
-		max = cfg.getInt(MAX, getCategory(), max, Integer.MIN_VALUE, Integer.MAX_VALUE, "The max value of this stat.");
+		String s = cfg.getString(ITEM, getId(), getDefaultItem(), "The item that applies this modifier.");
+		item = SpawnerModifiers.readIngredient(s);
+		if (value != -1) value = cfg.getInt(VALUE, getId(), value, Integer.MIN_VALUE, Integer.MAX_VALUE, "The amount each item changes this stat.");
+		if (min != -1) min = cfg.getInt(MIN, getId(), min, Integer.MIN_VALUE, Integer.MAX_VALUE, "The min value of this stat.");
+		if (max != -1) max = cfg.getInt(MAX, getId(), max, Integer.MIN_VALUE, Integer.MAX_VALUE, "The max value of this stat.");
 	}
 
 	public Ingredient getIngredient() {
-		return item;
+		return item.getValue();
 	}
 
 	public int getValue() {
 		return value;
 	}
-
-	public void setIngredient(Ingredient item) {
-		this.item = item;
-	}
-
-	public abstract String getCategory();
-
-	public abstract String getDefaultItem();
 
 	public int getMin() {
 		return min;
@@ -103,5 +101,21 @@ public abstract class SpawnerModifier {
 
 	public int getMax() {
 		return max;
+	}
+
+	public abstract String getId();
+
+	public abstract String getDefaultItem();
+
+	/**
+	 * Updates modifier data.
+	 * Used on the client during the receipt of modifiers from the server.
+	 */
+	public void sync(Ingredient ing, int value, int min, int max) {
+		this.item = new LazyValue<>(() -> ing);
+		this.item.getValue();
+		this.value = value;
+		this.min = min;
+		this.max = max;
 	}
 }
