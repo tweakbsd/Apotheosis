@@ -21,7 +21,7 @@ All things that should have been.
 [[dependencies.apotheosis]] #optional
     modId="forge" #mandatory
     mandatory=true #mandatory
-    versionRange="[35.1.36,)" #mandatory
+    versionRange="[35.1.4,)" #mandatory
     ordering="NONE"
     side="BOTH"
 

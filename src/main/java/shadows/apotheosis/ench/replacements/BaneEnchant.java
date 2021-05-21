@@ -59,11 +59,11 @@ public class BaneEnchant extends DamageEnchantment {
 	public boolean canApplyTogether(Enchantment ench) {
 
 		// NOTE: tweakbsd added only 1 BaneEnchant allowed!
-		return !(ench instanceof BaneEnchant);
+		//return !(ench instanceof BaneEnchant);
 
 		// NOTE: Apoth original code
-		//if (this.attrib == CreatureAttribute.UNDEFINED) return ench != this;
-		//return ench == Enchantments.SHARPNESS ? ench != this : !(ench instanceof BaneEnchant);
+		if (this.attrib == CreatureAttribute.UNDEFINED) return ench != this;
+		return ench == Enchantments.SHARPNESS ? ench != this : !(ench instanceof BaneEnchant);
 	}
 
 	/**

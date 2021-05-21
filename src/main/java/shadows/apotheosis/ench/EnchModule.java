@@ -171,7 +171,10 @@ public class EnchModule {
 	public void tiles(Register<TileEntityType<?>> e) {
 		e.getRegistry().register(new TileEntityType<>(AnvilTile::new, ImmutableSet.of(Blocks.ANVIL, Blocks.CHIPPED_ANVIL, Blocks.DAMAGED_ANVIL), null).setRegistryName("anvil"));
 		e.getRegistry().register(new TileEntityType<>(SeaAltarTile::new, ImmutableSet.of(ApotheosisObjects.PRISMATIC_ALTAR), null).setRegistryName("prismatic_altar"));
+		System.out.println("APOTHEOSIS registering EnchantingTable");
 		e.getRegistry().register(new TileEntityType<>(ApothEnchantTile::new, ImmutableSet.of(Blocks.ENCHANTING_TABLE), null).setRegistryName("minecraft:enchanting_table"));
+
+		e.getRegistry().register(new TileEntityType<>(ApothEnchantTile::new, ImmutableSet.of(Blocks.ENCHANTING_TABLE), null).setRegistryName("apotheosis:enchanting_table"));
 	}
 
 	@SubscribeEvent

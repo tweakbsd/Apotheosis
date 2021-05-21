@@ -44,7 +44,7 @@ public class DefenseEnchant extends ProtectionEnchantment {
 			if (pEnch.protectionType == Type.FALL) return true;
 			if (this.protectionType == pEnch.protectionType) return false;  // NOTE:
 			// NOTE: Apotheosis original value
-			// return pEnch.protectionType == Type.ALL || pEnch.protectionType == Type.FALL;
+			//return pEnch.protectionType == Type.ALL || pEnch.protectionType == Type.FALL;
 
 			return false;
 		}

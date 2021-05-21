@@ -73,6 +73,7 @@ public class EnchModuleClient {
 	public static void init() {
 		ClientRegistry.bindTileEntityRenderer(ApotheosisObjects.ALTAR_TYPE, SeaAltarRenderer::new);
 		ClientRegistry.bindTileEntityRenderer(ApotheosisObjects.ENCHANTING_TABLE, EnchantmentTableTileEntityRenderer::new);
+		System.out.println("APOTHEOSIS bindTileEntityRenderer to EnchantmentTable");
 		ScreenManager.registerFactory(ApotheosisObjects.ENCHANTING, ApothEnchantScreen::new);
 	}
 }
