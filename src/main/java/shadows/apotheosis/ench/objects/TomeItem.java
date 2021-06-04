@@ -10,7 +10,6 @@ import net.minecraft.enchantment.EnchantmentType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BookItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.Rarity;
@@ -31,7 +30,7 @@ public class TomeItem extends BookItem {
 	final EnchantmentType type;
 
 	public TomeItem(Item rep, EnchantmentType type) {
-		super(new Item.Properties().group(ItemGroup.MISC));
+		super(new Item.Properties().group(Apotheosis.APOTH_GROUP));
 		this.type = type;
 		this.rep = new ItemStack(rep);
 		this.setRegistryName(Apotheosis.MODID, (type == null ? "null" : type.name().toLowerCase(Locale.ROOT)) + "_book");
@@ -45,14 +44,14 @@ public class TomeItem extends BookItem {
 
 	@Override
 	public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
-		if (type == null) return EnchModule.TYPED_BOOKS.stream().filter(b -> b != this).allMatch(b -> !enchantment.canApply(new ItemStack(b)));
-		return enchantment.type == type || enchantment.canApplyAtEnchantingTable(rep);
+		if (this.type == null) return EnchModule.TYPED_BOOKS.stream().filter(b -> b != this).allMatch(b -> !enchantment.canApply(new ItemStack(b)));
+		return enchantment.type == this.type || enchantment.canApplyAtEnchantingTable(this.rep);
 	}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-		tooltip.add(new TranslationTextComponent("info.apotheosis." + getRegistryName().getPath()).mergeStyle(TextFormatting.GRAY));
+		tooltip.add(new TranslationTextComponent("info.apotheosis." + this.getRegistryName().getPath()).mergeStyle(TextFormatting.GRAY));
 	}
 
 	@Override

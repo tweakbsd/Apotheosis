@@ -3,9 +3,7 @@ package shadows.apotheosis.deadly.affix.impl.ranged;
 import java.util.Random;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.TranslationTextComponent;
 import shadows.apotheosis.deadly.affix.Affix;
-import shadows.apotheosis.deadly.affix.AffixHelper;
 import shadows.apotheosis.deadly.affix.EquipmentType;
 import shadows.apotheosis.deadly.affix.modifiers.AffixModifier;
 
@@ -19,10 +17,9 @@ public class TeleportDropsAffix extends Affix {
 	}
 
 	@Override
-	public float apply(ItemStack stack, Random rand, AffixModifier modifier) {
+	public float generateLevel(ItemStack stack, Random rand, AffixModifier modifier) {
 		int lvl = 2 + rand.nextInt(5);
 		if (modifier != null) lvl = (int) modifier.editLevel(this, lvl);
-		AffixHelper.addLore(stack, new TranslationTextComponent("affix." + this.getRegistryName() + ".desc", lvl));
 		return lvl;
 	}
 
@@ -39,6 +36,16 @@ public class TeleportDropsAffix extends Affix {
 	@Override
 	public float getMax() {
 		return 64;
+	}
+
+	@Override
+	public float upgradeLevel(float curLvl, float newLvl) {
+		return (int) super.upgradeLevel(curLvl, newLvl);
+	}
+
+	@Override
+	public float obliterateLevel(float level) {
+		return (int) super.obliterateLevel(level);
 	}
 
 }

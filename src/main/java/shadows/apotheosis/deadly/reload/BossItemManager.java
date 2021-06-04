@@ -1,6 +1,7 @@
 package shadows.apotheosis.deadly.reload;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,8 @@ import shadows.apotheosis.deadly.gen.BossItem;
 import shadows.apotheosis.util.AxisAlignedBBDeserializer;
 import shadows.apotheosis.util.ChancedEffectInstance;
 import shadows.apotheosis.util.EntityTypeDeserializer;
+import shadows.apotheosis.util.GearSet.SetPredicate;
+import shadows.apotheosis.util.GearSet.SetPredicateAdapter;
 import shadows.apotheosis.util.RandomAttributeModifier;
 
 public class BossItemManager extends JsonReloadListener {
@@ -36,6 +39,7 @@ public class BossItemManager extends JsonReloadListener {
 			.setPrettyPrinting()
 			.registerTypeAdapter(EntityType.class, new EntityTypeDeserializer())
 			.registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer())
+			.registerTypeAdapter(SetPredicate.class, new SetPredicateAdapter())
 			.setFieldNamingStrategy(f -> f.getName().equals(ASMAPI.mapField("field_76292_a")) ? "weight" : f.getName())
 			.registerTypeAdapter(RandomValueRange.class, new RandomValueRange.Serializer())
 			.registerTypeAdapter(ChancedEffectInstance.class, new ChancedEffectInstance.Deserializer())
@@ -55,36 +59,37 @@ public class BossItemManager extends JsonReloadListener {
 
 	@Override
 	protected void apply(Map<ResourceLocation, JsonElement> objects, IResourceManager resourceManagerIn, IProfiler profilerIn) {
-		entries.clear();
-		registry.clear();
+		this.entries.clear();
+		this.registry.clear();
 		for (Entry<ResourceLocation, JsonElement> obj : objects.entrySet()) {
 			try {
-				register(obj.getKey(), GSON.fromJson(obj.getValue(), BossItem.class));
+				this.register(obj.getKey(), GSON.fromJson(obj.getValue(), BossItem.class));
 			} catch (Exception e) {
 				DeadlyModule.LOGGER.error("Failed to load boss item {}.", obj.getKey());
 				e.printStackTrace();
 			}
 		}
-		if (entries.size() == 0) throw new RuntimeException("No Bosses were registered.  This is not supported.");
-		weight = WeightedRandom.getTotalWeight(entries);
-		DeadlyModule.LOGGER.info("Loaded {} boss items from resources.", entries.size());
+		if (this.entries.size() == 0) throw new RuntimeException("No Bosses were registered.  This is not supported.");
+		Collections.shuffle(this.entries);
+		this.weight = WeightedRandom.getTotalWeight(this.entries);
+		DeadlyModule.LOGGER.info("Loaded {} boss items from resources.", this.entries.size());
 	}
 
 	protected void register(ResourceLocation id, BossItem item) {
-		if (!registry.containsKey(id)) {
+		if (!this.registry.containsKey(id)) {
 			item.setId(id);
-			registry.put(id, item);
-			entries.add(item);
+			this.registry.put(id, item);
+			this.entries.add(item);
 		} else DeadlyModule.LOGGER.error("Attempted to register a boss item with name {}, but it already exists!", id);
 	}
 
 	public BossItem getRandomItem(Random rand) {
-		return WeightedRandom.getRandomItem(rand, entries, weight);
+		return WeightedRandom.getRandomItem(rand, this.entries, this.weight);
 	}
 
 	@Nullable
 	public BossItem getById(ResourceLocation id) {
-		return registry.get(id);
+		return this.registry.get(id);
 	}
 
 }

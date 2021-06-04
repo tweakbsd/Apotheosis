@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.MobEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
@@ -44,11 +45,15 @@ public class BossSpawnerBlock extends Block {
 
 		@Override
 		public void tick() {
-			if (world.isRemote) return;
-			if (ticks++ % 40 == 0 && world.getEntitiesWithinAABB(EntityType.PLAYER, new AxisAlignedBB(this.pos).grow(8, 8, 8), EntityPredicates.NOT_SPECTATING).stream().anyMatch(p -> !p.isCreative())) {
-				world.setBlockState(pos, Blocks.AIR.getDefaultState());
+			if (this.world.isRemote) return;
+			if (this.ticks++ % 40 == 0 && this.world.getEntitiesWithinAABB(EntityType.PLAYER, new AxisAlignedBB(this.pos).grow(8, 8, 8), EntityPredicates.NOT_SPECTATING).stream().anyMatch(p -> !p.isCreative())) {
+				this.world.setBlockState(this.pos, Blocks.AIR.getDefaultState());
 				BlockPos pos = this.pos;
-				if (item != null) item.spawnBoss((ServerWorld) world, pos, world.getRandom());
+				if (this.item != null) {
+					MobEntity entity = this.item.createBoss((ServerWorld) this.world, pos, this.world.getRandom());
+					entity.enablePersistence();
+					this.world.addEntity(entity);
+				}
 			}
 		}
 
@@ -58,13 +63,13 @@ public class BossSpawnerBlock extends Block {
 
 		@Override
 		public CompoundNBT write(CompoundNBT tag) {
-			tag.putString("boss_item", item.getId().toString());
+			tag.putString("boss_item", this.item.getId().toString());
 			return super.write(tag);
 		}
 
 		@Override
 		public void read(BlockState state, CompoundNBT tag) {
-			item = BossItemManager.INSTANCE.getById(new ResourceLocation(tag.getString("boss_item")));
+			this.item = BossItemManager.INSTANCE.getById(new ResourceLocation(tag.getString("boss_item")));
 			super.read(state, tag);
 		}
 

@@ -5,9 +5,7 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.TranslationTextComponent;
 import shadows.apotheosis.deadly.affix.Affix;
-import shadows.apotheosis.deadly.affix.AffixHelper;
 import shadows.apotheosis.deadly.affix.EquipmentType;
 import shadows.apotheosis.deadly.affix.modifiers.AffixModifier;
 
@@ -18,10 +16,9 @@ public class EnchantabilityAffix extends Affix {
 	}
 
 	@Override
-	public float apply(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
+	public float generateLevel(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
 		int ench = 5 + rand.nextInt(15);
 		if (modifier != null) ench = (int) modifier.editLevel(this, ench);
-		AffixHelper.addLore(stack, new TranslationTextComponent("affix." + this.getRegistryName() + ".desc", ench));
 		return ench;
 	}
 
@@ -33,6 +30,16 @@ public class EnchantabilityAffix extends Affix {
 	@Override
 	public float getMax() {
 		return 30;
+	}
+	
+	@Override
+	public float upgradeLevel(float curLvl, float newLvl) {
+		return (int) super.upgradeLevel(curLvl, newLvl);
+	}
+
+	@Override
+	public float obliterateLevel(float level) {
+		return (int) super.obliterateLevel(level);
 	}
 
 	@Override

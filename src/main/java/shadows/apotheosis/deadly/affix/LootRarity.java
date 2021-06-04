@@ -19,7 +19,7 @@ public enum LootRarity {
 	RARE(TextFormatting.BLUE, 2),
 	EPIC(TextFormatting.RED, 3),
 	MYTHIC(TextFormatting.DARK_GREEN, 3),
-	ANCIENT(TextFormatting.GOLD, 3);
+	ANCIENT(TextFormatting.AQUA, 3);
 
 	final TextFormatting color;
 	final int affixes;
@@ -30,11 +30,11 @@ public enum LootRarity {
 	}
 
 	public TextFormatting getColor() {
-		return color;
+		return this.color;
 	}
 
 	public int getAffixes() {
-		return affixes;
+		return this.affixes;
 	}
 
 	/**

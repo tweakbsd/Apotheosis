@@ -1,26 +1,23 @@
 package shadows.apotheosis.deadly.asm;
 
+import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
 
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.CreatureAttribute;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.container.RepairContainer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.stats.Stats;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.CachedBlockInfo;
+import net.minecraft.tileentity.CampfireTileEntity;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.BlockPos;
 import shadows.apotheosis.Apotheosis;
 import shadows.apotheosis.deadly.affix.Affix;
-import shadows.apotheosis.deadly.affix.AffixEvents;
 import shadows.apotheosis.deadly.affix.AffixHelper;
 import shadows.apotheosis.deadly.affix.Affixes;
 
@@ -113,36 +110,6 @@ public class DeadlyHooks {
 	}
 
 	/**
-	 * ASM Hook: Called from {@link ItemStack#onItemUse(ItemUseContext)}
-	 */
-	public static ActionResultType onItemUse(ItemStack stack, ItemUseContext ctx) {
-		ActionResultType type = AffixEvents.onItemUse(ctx);
-		if (type != null) return type;
-		if (!ctx.getWorld().isRemote) return net.minecraftforge.common.ForgeHooks.onPlaceItemIntoWorld(ctx);
-		return onItemUse(stack, ctx, c -> stack.getItem().onItemUse(ctx));
-	}
-
-	/**
-	 * Vanilla (Patch) Copy :: {@link ItemStack#onItemUse(ItemUseContext, Function)}
-	 */
-	public static ActionResultType onItemUse(ItemStack stack, ItemUseContext ctx, Function<ItemUseContext, ActionResultType> callback) {
-		PlayerEntity playerentity = ctx.getPlayer();
-		BlockPos blockpos = ctx.getPos();
-		CachedBlockInfo cachedblockinfo = new CachedBlockInfo(ctx.getWorld(), blockpos, false);
-		if (playerentity != null && !playerentity.abilities.allowEdit && !stack.canPlaceOn(ctx.getWorld().getTags(), cachedblockinfo)) {
-			return ActionResultType.PASS;
-		} else {
-			Item item = stack.getItem();
-			ActionResultType actionresulttype = callback.apply(ctx);
-			if (playerentity != null && actionresulttype == ActionResultType.SUCCESS) {
-				playerentity.addStat(Stats.ITEM_USED.get(item));
-			}
-
-			return actionresulttype;
-		}
-	}
-
-	/**
 	 * Allows for the enchantability affix to work properly.
 	 */
 	public static int getEnchantability(ItemStack stack) {
@@ -152,6 +119,38 @@ public class DeadlyHooks {
 			ench += affixes.getOrDefault(Affixes.ENCHANTABILITY, 0F).intValue();
 		}
 		return ench;
+	}
+
+	/**
+	 * ASM Hook: Called from {@link CampfireTileEntity#findMatchingRecipe}<br>
+	 * Replaces the standard {@link Inventory} with a context-aware {@link CampfireInventory}.
+	 */
+	public static IInventory getCampfireInv(IInventory src, CampfireTileEntity tile) {
+		return new CampfireInventory(tile, src.getStackInSlot(0));
+	}
+
+	public static class CampfireInventory extends Inventory {
+
+		private final WeakReference<CampfireTileEntity> tile;
+
+		public CampfireInventory(CampfireTileEntity tile, ItemStack stack) {
+			super(stack);
+			this.tile = new WeakReference<>(tile);
+		}
+
+		public CampfireTileEntity getTile() {
+			return this.tile.get();
+		}
+
+	}
+
+	/**
+	 * ASM Hook: Replaces all calls to {@link ItemStack#isDamageable()} in {@link RepairContainer}<br>
+	 * This allows for items with the "Unbreakable" tag to be used in an anvil.<br>
+	 * Applied by mythics_anvil.js
+	 */
+	public static boolean isTrulyDamageable(ItemStack stack) {
+		return stack.getItem().isDamageable(stack);
 	}
 
 }

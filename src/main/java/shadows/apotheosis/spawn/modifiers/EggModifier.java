@@ -8,6 +8,7 @@ import net.minecraft.item.Items;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.LazyValue;
+import net.minecraft.util.WeightedSpawnerEntity;
 import shadows.apotheosis.spawn.spawner.ApothSpawnerTile;
 import shadows.placebo.config.Configuration;
 import shadows.placebo.util.SpawnerBuilder;
@@ -33,8 +34,9 @@ public class EggModifier extends SpawnerModifier {
 	@Override
 	public boolean modify(ApothSpawnerTile spawner, ItemStack stack, boolean inverting) {
 		String name = ((SpawnEggItem) stack.getItem()).getType(null).getRegistryName().toString();
-		if (!bannedMobs.contains(name) && !name.equals(spawner.spawnerLogic.spawnData.getNbt().getString(SpawnerBuilder.ID))) {
+		if (!this.bannedMobs.contains(name) && !name.equals(spawner.spawnerLogic.spawnData.getNbt().getString(SpawnerBuilder.ID))) {
 			spawner.spawnerLogic.potentialSpawns.clear();
+			spawner.spawnerLogic.spawnData = new WeightedSpawnerEntity();
 			return false;
 		}
 		return true;
@@ -42,9 +44,9 @@ public class EggModifier extends SpawnerModifier {
 
 	@Override
 	public void load(Configuration cfg) {
-		String[] bans = cfg.getStringList("Banned Mobs", getId(), new String[0], "A list of entity registry names that cannot be applied to spawners via egg.");
+		String[] bans = cfg.getStringList("Banned Mobs", this.getId(), new String[0], "A list of entity registry names that cannot be applied to spawners via egg.");
 		for (String s : bans)
-			bannedMobs.add(s);
+			this.bannedMobs.add(s);
 	}
 
 	@Override

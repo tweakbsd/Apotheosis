@@ -1,22 +1,20 @@
 package shadows.apotheosis.deadly.reload;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.spongepowered.asm.mixin.Unique;
 
-import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 import net.minecraft.client.resources.JsonReloadListener;
-import net.minecraft.entity.ai.attributes.Attribute;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.profiler.IProfiler;
@@ -47,6 +45,8 @@ public class AffixLootManager extends JsonReloadListener {
 
 	private static final List<AffixLootEntry> ENTRIES = new ArrayList<>();
 
+	private int weight = 0;
+
 	private AffixLootManager() {
 		super(GSON, "affix_loot_entries");
 	}
@@ -63,6 +63,8 @@ public class AffixLootManager extends JsonReloadListener {
 				e.printStackTrace();
 			}
 		}
+		Collections.shuffle(ENTRIES);
+		weight = WeightedRandom.getTotalWeight(ENTRIES);
 		DeadlyModule.LOGGER.info("Loaded {} affix loot entries from resources.", ENTRIES.size());
 	}
 
@@ -73,13 +75,21 @@ public class AffixLootManager extends JsonReloadListener {
 	/**
 	 * Selects a random loot entry itemstack from the list of entries.
 	 * @param rand A random.
+	 * @return A loot entry's stack, or a unique, if the rarity selected was ancient.
+	 */
+	public static AffixLootEntry getRandomEntry(Random rand) {
+		return WeightedRandom.getRandomItem(rand, ENTRIES, INSTANCE.weight);
+	}
+
+	/**
+	 * Selects a random loot entry itemstack from the list of entries, filtered by type.
+	 * @param rand A random.
 	 * @param rarity If this is {@link LootRarity#ANCIENT}, then the item returned will be an {@link Unique}
 	 * @return A loot entry's stack, or a unique, if the rarity selected was ancient.
 	 */
-	public static ItemStack getRandomEntry(Random rand, LootRarity rarity) {
-		AffixLootEntry entry = WeightedRandom.getRandomItem(rand, ENTRIES);
-		ItemStack stack = rarity == LootRarity.ANCIENT ? genUnique(rand) : entry.getStack().copy();
-		return stack;
+	public static AffixLootEntry getRandomEntry(Random rand, EquipmentType type) {
+		if (type == null) return getRandomEntry(rand);
+		return WeightedRandom.getRandomItem(rand, ENTRIES.stream().filter(p -> p.getType() == type).collect(Collectors.toList()));
 	}
 
 	/**
@@ -87,19 +97,21 @@ public class AffixLootManager extends JsonReloadListener {
 	 * Note that this will be unusual if the passed in itemstack does not meet the qualities of any equipment type.
 	 * The default equipment type is {@link EquipmentType#TOOL}, so items that do not match will be treated as tools.
 	 */
-	public static ItemStack genLootItem(ItemStack stack, Random rand, LootRarity rarity) {
+	public static ItemStack genLootItem(ItemStack stack, Random rand, EquipmentType type, LootRarity rarity) {
 		ITextComponent name = stack.getDisplayName();
-		EquipmentType type = EquipmentType.getTypeFor(stack);
+		if (type == null) {
+			AffixHelper.addLore(stack, new StringTextComponent("ERROR - ATTEMPTED TO GENERATE LOOT ITEM WITH INVALID EQUIPMENT TYPE."));
+			return stack;
+		}
 		Map<Affix, AffixModifier> affixes = new HashMap<>();
 		AffixHelper.setRarity(stack, rarity);
-		recomputeBaseAttributes(stack);
 
-		if (type == EquipmentType.AXE) AffixHelper.applyAffix(stack, Affixes.PIERCING, Affixes.PIERCING.apply(stack, rand, null));
+		if (type == EquipmentType.AXE) AffixHelper.applyAffix(stack, Affixes.PIERCING, Affixes.PIERCING.generateLevel(stack, rand, null));
 
 		List<Affix> afxList = AffixHelper.getAffixesFor(type);
 		int affixCount = rarity.getAffixes();
 		while (affixes.size() < Math.min(affixCount, afxList.size())) {
-			affixes.put(WeightedRandom.getRandomItem(rand, afxList), rarity == LootRarity.COMMON ? rand.nextBoolean() ? Modifiers.MIN : Modifiers.HALF : null);
+			affixes.put(WeightedRandom.getRandomItem(rand, afxList), rarity == LootRarity.COMMON ? Modifiers.getBadModifier() : null);
 		}
 
 		if (rarity.ordinal() >= LootRarity.EPIC.ordinal()) {
@@ -111,7 +123,7 @@ public class AffixLootManager extends JsonReloadListener {
 
 		for (Affix a : affixes.keySet()) {
 			name = a.chainName(name, affixes.get(a));
-			AffixHelper.applyAffix(stack, a, a.apply(stack, rand, affixes.get(a)));
+			AffixHelper.applyAffix(stack, a, a.generateLevel(stack, rand, affixes.get(a)));
 		}
 
 		if (rarity.ordinal() >= LootRarity.MYTHIC.ordinal()) {
@@ -128,12 +140,6 @@ public class AffixLootManager extends JsonReloadListener {
 	 */
 	public static ItemStack genUnique(Random rand) {
 		return ItemStack.EMPTY;
-	}
-
-	public static void recomputeBaseAttributes(ItemStack stack) {
-		EquipmentSlotType slot = EquipmentType.getTypeFor(stack).getSlot(stack);
-		Multimap<Attribute, AttributeModifier> modifs = stack.getAttributeModifiers(slot);
-		modifs.forEach((s, a) -> stack.addAttributeModifier(s, a, slot));
 	}
 
 }

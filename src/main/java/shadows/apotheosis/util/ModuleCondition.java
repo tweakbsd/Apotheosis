@@ -23,7 +23,7 @@ public class ModuleCondition implements ICondition {
 		types.put("deadly", () -> Apotheosis.enableDeadly);
 		types.put("enchantment", () -> Apotheosis.enableEnch);
 		types.put("potion", () -> Apotheosis.enablePotion);
-		types.put("villager", () -> Apotheosis.enableVillager);
+		types.put("village", () -> Apotheosis.enableVillage);
 	}
 
 	final String name;
@@ -39,7 +39,7 @@ public class ModuleCondition implements ICondition {
 
 	@Override
 	public boolean test() {
-		return types.get(name).get();
+		return types.get(this.name).get();
 	}
 
 	public static class Serializer implements IConditionSerializer<ModuleCondition> {

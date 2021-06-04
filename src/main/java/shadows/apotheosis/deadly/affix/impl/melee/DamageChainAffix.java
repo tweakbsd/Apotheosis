@@ -13,9 +13,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.text.TranslationTextComponent;
 import shadows.apotheosis.Apotheosis;
-import shadows.apotheosis.deadly.affix.AffixHelper;
 import shadows.apotheosis.deadly.affix.EquipmentType;
 import shadows.apotheosis.deadly.affix.impl.RangedAffix;
 import shadows.apotheosis.deadly.affix.modifiers.AffixModifier;
@@ -46,10 +44,9 @@ public class DamageChainAffix extends RangedAffix {
 	}
 
 	@Override
-	public float apply(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
-		float lvl = range.generateFloat(rand);
+	public float generateLevel(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
+		float lvl = this.range.generateFloat(rand);
 		if (modifier != null) lvl = modifier.editLevel(this, lvl);
-		AffixHelper.addLore(stack, new TranslationTextComponent("affix." + this.getRegistryName() + ".desc", String.format("%.2f", lvl)));
 		return lvl;
 	}
 

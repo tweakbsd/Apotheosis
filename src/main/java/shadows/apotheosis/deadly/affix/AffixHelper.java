@@ -21,9 +21,18 @@ public class AffixHelper {
 
 	public static final String AFFIXES = "Affixes";
 
+	/**
+	 * Adds this specific affix to the Item's NBT tag.
+	 * Does not edit the item name or perform other changes.
+	 */
 	public static void applyAffix(ItemStack stack, Affix affix, float level) {
 		CompoundNBT tag = stack.getOrCreateChildTag(AFFIXES);
 		tag.putFloat(affix.getRegistryName().toString(), level);
+	}
+
+	public static void setAffixes(ItemStack stack, Map<Affix, Float> affixes) {
+		stack.removeChildTag(AFFIXES);
+		affixes.forEach((a, l) -> applyAffix(stack, a, l));
 	}
 
 	public static Map<Affix, Float> getAffixes(ItemStack stack) {
@@ -38,6 +47,18 @@ public class AffixHelper {
 			}
 		}
 		return map;
+	}
+
+	public static boolean hasAffixes(ItemStack stack) {
+		return stack.hasTag() && !stack.getTag().getCompound(AffixHelper.AFFIXES).isEmpty();
+	}
+
+	public static float getAffixLevel(ItemStack stack, Affix afx) {
+		if (stack.hasTag() && stack.getTag().contains(AFFIXES)) {
+			CompoundNBT tag = stack.getTag().getCompound(AFFIXES);
+			return tag.getFloat(afx.getRegistryName().toString());
+		}
+		return 0;
 	}
 
 	public static void addLore(ItemStack stack, ITextComponent lore) {

@@ -1,5 +1,5 @@
 {
-	"weight": 3,
+	"weight": 15,
 	"mainhands": [{
 			"weight": 4,
 			"stack": {
@@ -48,5 +48,8 @@
 		"stack": {
 			"item": "minecraft:iron_helmet"
 		}
-	}]
+	}],
+	"tags": [
+		"standard"
+	]
 }

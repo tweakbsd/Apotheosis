@@ -4,9 +4,7 @@ import java.util.Random;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.AttributeModifier.Operation;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import shadows.apotheosis.deadly.affix.EquipmentType;
 import shadows.apotheosis.deadly.affix.attributes.CustomAttributes;
@@ -30,12 +28,31 @@ public class DrawSpeedAffix extends AttributeAffix {
 	}
 
 	@Override
-	public float apply(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
-		EquipmentSlotType type = EquipmentType.getTypeFor(stack).getSlot(stack);
+	public float generateLevel(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
 		float lvl = values[rand.nextInt(values.length)];
-		AttributeModifier modif = new AttributeModifier(this.getRegistryName() + "_" + attr.get().getRegistryName(), lvl, op);
-		stack.addAttributeModifier(attr.get(), modif, type);
 		return lvl;
 	}
 
+	public float upgradeLevel(float curLvl, float newLvl) {
+		int curIdx = 0, newIdx = 0;
+		for (int i = 0; i < values.length; i++) {
+			if (values[i] == curLvl) curIdx = i;
+			if (values[i] == newLvl) newIdx = i;
+		}
+		return values[Math.min(values.length - 1, curIdx > newIdx ? curIdx + newIdx / 2 : curIdx / 2 + newIdx)];
+	}
+
+	/**
+	 * Generates a new level, as if the passed level were to be split in two.
+	 */
+	public float obliterateLevel(float level) {
+		int idx = 0;
+		for (int i = 0; i < values.length; i++) {
+			if (values[i] == level) {
+				idx = i;
+				break;
+			}
+		}
+		return values[Math.max(0, idx / 2)];
+	}
 }

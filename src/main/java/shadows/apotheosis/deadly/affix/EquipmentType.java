@@ -2,16 +2,16 @@ package shadows.apotheosis.deadly.affix;
 
 import java.util.function.Function;
 
+import javax.annotation.Nullable;
+
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ArmorItem;
-import net.minecraft.item.AxeItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.PickaxeItem;
-import net.minecraft.item.ShieldItem;
 import net.minecraft.item.ShootableItem;
-import net.minecraft.item.ShovelItem;
-import net.minecraft.item.SwordItem;
+import net.minecraftforge.common.ToolType;
+import shadows.apotheosis.deadly.config.DeadlyConfig;
 
 public enum EquipmentType {
 	SWORD(s -> EquipmentSlotType.MAINHAND),
@@ -32,15 +32,17 @@ public enum EquipmentType {
 		return this.type.apply(stack);
 	}
 
+	@Nullable
 	public static EquipmentType getTypeFor(ItemStack stack) {
 		Item i = stack.getItem();
-		if (i instanceof SwordItem) return SWORD;
+		if (DeadlyConfig.TYPE_OVERRIDES.containsKey(i.getRegistryName())) return DeadlyConfig.TYPE_OVERRIDES.get(i.getRegistryName());
 		if (i instanceof ShootableItem) return RANGED;
 		if (i instanceof ArmorItem) return ARMOR;
-		if (i instanceof ShieldItem) return SHIELD;
-		if (i instanceof AxeItem) return AXE;
-		if (i instanceof PickaxeItem) return PICKAXE;
-		if (i instanceof ShovelItem) return SHOVEL;
-		return SWORD;
+		if (i.isShield(stack, null)) return SHIELD;
+		if (i.getToolTypes(stack).contains(ToolType.PICKAXE)) return PICKAXE;
+		if (i.getToolTypes(stack).contains(ToolType.AXE)) return AXE;
+		if (i.getToolTypes(stack).contains(ToolType.SHOVEL)) return SHOVEL;
+		if (i.getAttributeModifiers(EquipmentSlotType.MAINHAND, stack).get(Attributes.ATTACK_DAMAGE).stream().anyMatch(m -> m.getAmount() > 0)) return SWORD;
+		return null;
 	}
 }

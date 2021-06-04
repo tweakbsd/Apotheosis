@@ -7,26 +7,35 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
+import io.netty.util.internal.ThreadLocalRandom;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.ISuggestionProvider;
+import net.minecraft.command.arguments.BlockPosArgument;
+import net.minecraft.command.arguments.LocationInput;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.ai.attributes.Attribute;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.monster.MonsterEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.ParticleTypes;
@@ -40,9 +49,18 @@ import net.minecraft.util.IndirectEntityDamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
-import net.minecraft.util.WeightedRandom;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.world.IServerWorld;
+import net.minecraft.world.IWorld;
+import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.event.AnvilUpdateEvent;
+import net.minecraftforge.event.ItemAttributeModifierEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
@@ -50,15 +68,24 @@ import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.BreakSpeed;
 import net.minecraftforge.event.entity.player.PlayerEvent.HarvestCheck;
 import net.minecraftforge.event.village.WandererTradesEvent;
+import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.Event.Result;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import shadows.apotheosis.deadly.DeadlyModule;
+import shadows.apotheosis.deadly.affix.impl.tool.RadiusMiningAffix;
 import shadows.apotheosis.deadly.config.DeadlyConfig;
+import shadows.apotheosis.deadly.gen.BossItem;
+import shadows.apotheosis.deadly.objects.AffixTomeItem;
 import shadows.apotheosis.deadly.reload.AffixLootManager;
+import shadows.apotheosis.deadly.reload.BossItemManager;
+import shadows.placebo.events.ItemUseEvent;
+import shadows.placebo.events.ShieldBlockEvent;
+import shadows.placebo.util.ReflectionHelper;
 
 public class AffixEvents {
 
@@ -202,26 +229,44 @@ public class AffixEvents {
 	}
 
 	@SubscribeEvent
-	public void starting(FMLServerStartingEvent e) {
-		e.getServer().getCommandManager().getDispatcher().register(LiteralArgumentBuilder.<CommandSource>literal("affixloot").requires(c -> c.hasPermissionLevel(2)).then(Commands.argument("rarity", StringArgumentType.word()).suggests((a, b) -> {
-			return ISuggestionProvider.suggest(Arrays.stream(LootRarity.values()).map(r -> r.toString()).collect(Collectors.toList()), b);
-		}).executes(c -> {
+	public void cmds(RegisterCommandsEvent e) {
+		e.getDispatcher().register(LiteralArgumentBuilder.<CommandSource>literal("affixloot").requires(c -> c.hasPermissionLevel(2)).then(Commands.argument("rarity", StringArgumentType.word()).suggests((a, b) -> ISuggestionProvider.suggest(Arrays.stream(LootRarity.values()).map(LootRarity::toString).collect(Collectors.toList()), b)).then(Commands.argument("type", StringArgumentType.word()).suggests((a, b) -> ISuggestionProvider.suggest(Arrays.stream(EquipmentType.values()).map(EquipmentType::toString).collect(Collectors.toList()), b)).executes(c -> {
 			PlayerEntity p = c.getSource().asPlayer();
-			p.addItemStackToInventory(AffixLootManager.genLootItem(AffixLootManager.getRandomEntry(p.world.rand, null), p.world.rand, LootRarity.valueOf(c.getArgument("rarity", String.class))));
+			String type = c.getArgument("type", String.class);
+			EquipmentType eType = null;
+			try {
+				eType = EquipmentType.valueOf(type);
+			} catch (Exception ex) {
+			}
+			AffixLootEntry entry = AffixLootManager.getRandomEntry(p.world.rand, eType);
+			ItemStack stack = entry.getStack().copy();
+			p.addItemStackToInventory(AffixLootManager.genLootItem(stack, p.world.rand, entry.getType(), LootRarity.valueOf(c.getArgument("rarity", String.class))));
+			return 0;
+		}))));
+		e.getDispatcher().register(LiteralArgumentBuilder.<CommandSource>literal("apothboss").requires(c -> c.hasPermissionLevel(2)).then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(c -> {
+			BlockPos pos = c.getArgument("pos", LocationInput.class).getBlockPos(c.getSource());
+			BossItem item = BossItemManager.INSTANCE.getRandomItem(ThreadLocalRandom.current());
+			ServerWorld world = c.getSource().getWorld();
+			MobEntity ent = item.createBoss(world, pos, ThreadLocalRandom.current());
+			world.addEntity(ent);
+			c.getSource().sendFeedback(new StringTextComponent(ent.getName().getString() + " has been summoned."), false);
 			return 0;
 		})));
 	}
 
-	public static ActionResultType onItemUse(ItemUseContext ctx) {
-		ItemStack s = ctx.getItem();
+	@SubscribeEvent
+	public void onItemUse(ItemUseEvent e) {
+		ItemStack s = e.getItemStack();
 		if (!s.isEmpty()) {
 			Map<Affix, Float> affixes = AffixHelper.getAffixes(s);
 			for (Map.Entry<Affix, Float> ent : affixes.entrySet()) {
-				ActionResultType type = ent.getKey().onItemUse(ctx, ent.getValue());
-				if (type != null) return type;
+				ActionResultType type = ent.getKey().onItemUse(e.getContext(), ent.getValue());
+				if (type != null) {
+					e.setCanceled(true);
+					e.setCancellationResult(type);
+				}
 			}
 		}
-		return null;
 	}
 
 	@SubscribeEvent
@@ -294,16 +339,16 @@ public class AffixEvents {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOW)
-	public void spawns(LivingSpawnEvent.SpecialSpawn e) {
+	public void addAffixGear(LivingSpawnEvent.SpecialSpawn e) {
 		if (e.getSpawnReason() == SpawnReason.NATURAL || e.getSpawnReason() == SpawnReason.CHUNK_GENERATION) {
 			LivingEntity entity = e.getEntityLiving();
 			Random rand = e.getWorld().getRandom();
 			if (!e.getWorld().isRemote() && entity instanceof MonsterEntity) {
 				if (entity.getHeldItemMainhand().isEmpty() && rand.nextInt(DeadlyConfig.randomAffixItem) == 0) {
 					LootRarity rarity = LootRarity.random(rand);
-					AffixLootEntry entry = WeightedRandom.getRandomItem(rand, AffixLootManager.getEntries());
+					AffixLootEntry entry = AffixLootManager.getRandomEntry(rand);
 					EquipmentSlotType slot = entry.getType().getSlot(entry.getStack());
-					ItemStack loot = AffixLootManager.genLootItem(entry.getStack().copy(), rand, rarity);
+					ItemStack loot = AffixLootManager.genLootItem(entry.getStack().copy(), rand, entry.getType(), rarity);
 					loot.getTag().putBoolean("apoth_rspawn", true);
 					entity.setItemStackToSlot(slot, loot);
 					((MobEntity) entity).setDropChance(slot, 2);
@@ -313,8 +358,110 @@ public class AffixEvents {
 		}
 	}
 
+	@SubscribeEvent(priority = EventPriority.LOWEST)
+	public void surfaceBosses(LivingSpawnEvent.CheckSpawn e) {
+		if (e.getSpawnReason() == SpawnReason.NATURAL || e.getSpawnReason() == SpawnReason.CHUNK_GENERATION) {
+			LivingEntity entity = e.getEntityLiving();
+			Random rand = e.getWorld().getRandom();
+			if (!e.getWorld().isRemote() && entity instanceof MonsterEntity && e.getResult() == Result.DEFAULT) {
+				if (rand.nextInt(DeadlyConfig.surfaceBossChance) == 0 && e.getWorld().canSeeSky(new BlockPos(e.getX(), e.getY(), e.getZ()))) {
+					BossItem item = BossItemManager.INSTANCE.getRandomItem(rand);
+					PlayerEntity player = e.getWorld().getClosestPlayer(e.getX(), e.getY(), e.getZ(), -1, false);
+					if (player == null) return; //Should never be null, but we check anyway since nothing makes sense around here.
+					MobEntity boss = item.createBoss((IServerWorld) e.getWorld(), new BlockPos(e.getX() - 0.5, e.getY(), e.getZ() - 0.5), rand);
+					if (canSpawn(e.getWorld(), boss, player.getDistanceSq(boss))) {
+						e.getWorld().addEntity(boss);
+						e.setResult(Result.DENY);
+						DeadlyModule.debugLog(boss.getPosition(), "Surface Boss - " + boss.getName().getString());
+						if (DeadlyConfig.surfaceBossLightning) {
+							LightningBoltEntity le = EntityType.LIGHTNING_BOLT.create(((IServerWorld) e.getWorld()).getWorld());
+							le.setPosition(boss.getPosX(), boss.getPosY(), boss.getPosZ());
+							le.setEffectOnly(true);
+							e.getWorld().addEntity(le);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private static boolean canSpawn(IWorld world, MobEntity entity, double playerDist) {
+		if (playerDist > entity.getType().getClassification().getInstantDespawnDistance() * entity.getType().getClassification().getInstantDespawnDistance() && entity.canDespawn(playerDist)) {
+			return false;
+		} else {
+			return entity.canSpawn(world, SpawnReason.NATURAL) && entity.isNotColliding(world);
+		}
+	}
+
 	@SubscribeEvent(priority = EventPriority.LOW)
 	public void trades(WandererTradesEvent e) {
 		if (DeadlyConfig.affixTrades) e.getRareTrades().add(new AffixTrade());
+	}
+
+	@SubscribeEvent(priority = EventPriority.LOWEST)
+	public void sortModifiers(ItemAttributeModifierEvent e) {
+		if (e.getModifiers().isEmpty()) return;
+		Multimap<Attribute, AttributeModifier> map = TreeMultimap.create((k1, k2) -> k1.getRegistryName().compareTo(k2.getRegistryName()), (v1, v2) -> {
+			int compOp = Integer.compare(v1.getOperation().ordinal(), v2.getOperation().ordinal());
+			int compValue = Double.compare(v2.getAmount(), v1.getAmount());
+			return compOp == 0 ? compValue : compOp;
+		});
+		map.putAll(e.getModifiers());
+		ReflectionHelper.setPrivateValue(ItemAttributeModifierEvent.class, e, map, "unmodifiableModifiers");
+	}
+
+	@SubscribeEvent
+	public void affixModifiers(ItemAttributeModifierEvent e) {
+		ItemStack stack = e.getItemStack();
+		if (stack.getItem() instanceof IAffixSensitiveItem && !((IAffixSensitiveItem) stack.getItem()).receivesAttributes(stack)) return;
+		if (stack.hasTag()) {
+			Map<Affix, Float> affixes = AffixHelper.getAffixes(stack);
+			affixes.forEach((afx, lvl) -> afx.addModifiers(stack, lvl, e.getSlotType(), e::addModifier));
+		}
+	}
+
+	@OnlyIn(Dist.CLIENT)
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	public void affixTooltips(ItemTooltipEvent e) {
+		ItemStack stack = e.getItemStack();
+		if (stack.getItem() instanceof IAffixSensitiveItem && !((IAffixSensitiveItem) stack.getItem()).receivesTooltips(stack)) return;
+		if (stack.hasTag()) {
+			Map<Affix, Float> affixes = AffixHelper.getAffixes(stack);
+			List<ITextComponent> components = new ArrayList<>();
+			affixes.forEach((afx, lvl) -> afx.addInformation(stack, lvl, components::add));
+			e.getToolTip().addAll(1, components);
+		}
+	}
+
+	@SubscribeEvent
+	public void shieldBlock(ShieldBlockEvent e) {
+		ItemStack stack = e.getEntity().getActiveItemStack();
+		if (stack.isShield(e.getEntity()) && stack.hasTag()) {
+			Map<Affix, Float> affixes = AffixHelper.getAffixes(stack);
+			float blocked = e.getBlocked();
+			for (Map.Entry<Affix, Float> ent : affixes.entrySet()) {
+				blocked = ent.getKey().onShieldBlock(e.getEntity(), stack, e.getSource(), blocked, ent.getValue());
+			}
+			if (blocked != e.getOriginalBlocked()) e.setBlocked(blocked);
+		}
+	}
+
+	@SubscribeEvent(priority = EventPriority.LOW)
+	public void onBreak(BlockEvent.BreakEvent e) {
+		PlayerEntity player = e.getPlayer();
+		ItemStack tool = player.getHeldItemMainhand();
+		World world = player.world;
+		if (!world.isRemote && tool.hasTag()) {
+			int level = (int) AffixHelper.getAffixLevel(tool, Affixes.RADIUS_MINING);
+			if (level > 0) {
+				float hardness = e.getState().getBlockHardness(e.getWorld(), e.getPos());
+				RadiusMiningAffix.breakExtraBlocks((ServerPlayerEntity) player, e.getPos(), tool, level, hardness);
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public void anvilEvent(AnvilUpdateEvent e) {
+		if (AffixTomeItem.updateAnvil(e)) return;
 	}
 }

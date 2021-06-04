@@ -10,9 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
 import net.minecraft.item.Items;
 import net.minecraft.util.ActionResultType;
-import net.minecraft.util.text.TranslationTextComponent;
 import shadows.apotheosis.deadly.affix.Affix;
-import shadows.apotheosis.deadly.affix.AffixHelper;
 import shadows.apotheosis.deadly.affix.EquipmentType;
 import shadows.apotheosis.deadly.affix.modifiers.AffixModifier;
 
@@ -26,10 +24,9 @@ public class TorchPlacementAffix extends Affix {
 	}
 
 	@Override
-	public float apply(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
+	public float generateLevel(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
 		int duraCost = 4 + rand.nextInt(5);
 		if (modifier != null) duraCost = (int) modifier.editLevel(this, duraCost);
-		AffixHelper.addLore(stack, new TranslationTextComponent("affix." + this.getRegistryName() + ".desc", 9 - duraCost));
 		return 9 - duraCost;
 	}
 
@@ -41,6 +38,16 @@ public class TorchPlacementAffix extends Affix {
 	@Override
 	public float getMax() {
 		return 8;
+	}
+
+	@Override
+	public float upgradeLevel(float curLvl, float newLvl) {
+		return Math.min(curLvl, newLvl);
+	}
+
+	@Override
+	public float obliterateLevel(float level) {
+		return Math.min(9, level * 2);
 	}
 
 	@Override

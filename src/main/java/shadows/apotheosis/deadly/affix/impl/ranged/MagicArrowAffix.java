@@ -3,9 +3,7 @@ package shadows.apotheosis.deadly.affix.impl.ranged;
 import java.util.Random;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.TranslationTextComponent;
 import shadows.apotheosis.deadly.affix.Affix;
-import shadows.apotheosis.deadly.affix.AffixHelper;
 import shadows.apotheosis.deadly.affix.EquipmentType;
 import shadows.apotheosis.deadly.affix.modifiers.AffixModifier;
 
@@ -19,8 +17,7 @@ public class MagicArrowAffix extends Affix {
 	}
 
 	@Override
-	public float apply(ItemStack stack, Random rand, AffixModifier modifier) {
-		AffixHelper.addLore(stack, new TranslationTextComponent("affix." + this.getRegistryName() + ".desc"));
+	public float generateLevel(ItemStack stack, Random rand, AffixModifier modifier) {
 		return 1;
 	}
 
@@ -31,6 +28,16 @@ public class MagicArrowAffix extends Affix {
 
 	@Override
 	public float getMin() {
+		return 1;
+	}
+	
+	@Override
+	public float upgradeLevel(float curLvl, float newLvl) {
+		return 1;
+	}
+
+	@Override
+	public float obliterateLevel(float level) {
 		return 1;
 	}
 

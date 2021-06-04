@@ -1,8 +1,8 @@
 package shadows.apotheosis.ench;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +13,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.google.common.collect.ImmutableSet;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.AnvilBlock;
 import net.minecraft.block.Block;
@@ -22,12 +24,19 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantment.Rarity;
+import net.minecraft.enchantment.EnchantmentData;
 import net.minecraft.enchantment.EnchantmentType;
 import net.minecraft.enchantment.ProtectionEnchantment;
 import net.minecraft.enchantment.LootBonusEnchantment;
 import net.minecraft.entity.CreatureAttribute;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.container.ContainerType;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.HoeItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.item.ShieldItem;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.potion.Potions;
 import net.minecraft.tileentity.TileEntityType;
@@ -39,6 +48,7 @@ import net.minecraftforge.event.RegistryEvent.Register;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import shadows.apotheosis.Apotheosis;
 import shadows.apotheosis.Apotheosis.ApotheosisReloadEvent;
@@ -99,8 +109,10 @@ import shadows.placebo.util.PlaceboUtil;
 public class EnchModule {
 
 	public static final Map<Enchantment, EnchantmentInfo> ENCHANTMENT_INFO = new HashMap<>();
+	public static final Object2IntMap<Enchantment> ENCH_HARD_CAPS = new Object2IntOpenHashMap<>();
+	public static final String ENCH_HARD_CAP_IMC = "set_ench_hard_cap";
 	public static final Logger LOGGER = LogManager.getLogger("Apotheosis : Enchantment");
-	public static final List<TomeItem> TYPED_BOOKS = new LinkedList<>();
+	public static final List<TomeItem> TYPED_BOOKS = new ArrayList<>();
 	public static final DamageSource CORRUPTED = new DamageSource("apoth_corrupted").setDamageBypassesArmor().setDamageIsAbsolute();
 	public static final EquipmentSlotType[] ARMOR = { EquipmentSlotType.HEAD, EquipmentSlotType.CHEST, EquipmentSlotType.LEGS, EquipmentSlotType.FEET };
 	public static final EnchantmentType HOE = EnchantmentType.create("HOE", i -> i instanceof HoeItem);
@@ -113,7 +125,7 @@ public class EnchModule {
 
 	@SubscribeEvent
 	public void init(FMLCommonSetupEvent e) {
-		reload(null);
+		this.reload(null);
 
 		Ingredient pot = Apotheosis.potionIngredient(Potions.REGENERATION);
 		Apotheosis.HELPER.addShaped(ApotheosisObjects.HELLSHELF, 3, 3, Blocks.NETHER_BRICKS, Blocks.NETHER_BRICKS, Blocks.NETHER_BRICKS, Items.BLAZE_ROD, "forge:bookshelves", pot, Blocks.NETHER_BRICKS, Blocks.NETHER_BRICKS, Blocks.NETHER_BRICKS);
@@ -182,6 +194,26 @@ public class EnchModule {
 		e.getRegistry().register(new ContainerType<>(ApothEnchantContainer::new).setRegistryName("enchanting"));
 	}
 
+	/**
+	 * This handles IMC events for the enchantment module. <br>
+	 * Currently only one type is supported.  A mod may pass a single {@link EnchantmentData} indicating the hard capped max level for an enchantment. <br>
+	 * That pair must use the method {@link ENCH_HARD_CAP_IMC}.
+	 */
+	@SubscribeEvent
+	public void handleIMC(InterModProcessEvent e) {
+		e.getIMCStream(ENCH_HARD_CAP_IMC::equals).forEach(msg -> {
+			try {
+				EnchantmentData data = msg.<EnchantmentData>getMessageSupplier().get();
+				if (data != null && data.enchantment != null && data.enchantmentLevel > 0) {
+					ENCH_HARD_CAPS.put(data.enchantment, data.enchantmentLevel);
+				} else LOGGER.error("Failed to process IMC message with method {} from {} (invalid values passed).", msg.getMethod(), msg.getSenderModId());
+			} catch (Exception ex) {
+				LOGGER.error("Exception thrown during IMC message with method {} from {}.", msg.getMethod(), msg.getSenderModId());
+				ex.printStackTrace();
+			}
+		});
+	}
+
 	@SubscribeEvent
 	public void blocks(Register<Block> e) {
 		//Formatter::off
@@ -213,7 +245,7 @@ public class EnchModule {
 		//Formatter::off
 		e.getRegistry().registerAll(
 				shears = new ApothShearsItem(),
-				new Item(new Item.Properties().group(ItemGroup.MISC)).setRegistryName(Apotheosis.MODID, "prismatic_web"),
+				new Item(new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName(Apotheosis.MODID, "prismatic_web"),
 				new ApothAnvilItem(Blocks.ANVIL),
 				new ApothAnvilItem(Blocks.CHIPPED_ANVIL),
 				new ApothAnvilItem(Blocks.DAMAGED_ANVIL),
@@ -226,19 +258,19 @@ public class EnchModule {
 				new TomeItem(Items.DIAMOND_PICKAXE, EnchantmentType.DIGGER),
 				new TomeItem(Items.FISHING_ROD, EnchantmentType.FISHING_ROD),
 				new TomeItem(Items.BOW, EnchantmentType.BOW),
-				new BlockItem(ApotheosisObjects.PRISMATIC_ALTAR, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("prismatic_altar"),
+				new BlockItem(ApotheosisObjects.PRISMATIC_ALTAR, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("prismatic_altar"),
 				new ScrappingTomeItem(),
 				new HellshelfItem(ApotheosisObjects.HELLSHELF).setRegistryName(ApotheosisObjects.HELLSHELF.getRegistryName()),
-				new BlockItem(ApotheosisObjects.BLAZING_HELLSHELF, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("blazing_hellshelf"),
-				new BlockItem(ApotheosisObjects.GLOWING_HELLSHELF, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("glowing_hellshelf"),
+				new BlockItem(ApotheosisObjects.BLAZING_HELLSHELF, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("blazing_hellshelf"),
+				new BlockItem(ApotheosisObjects.GLOWING_HELLSHELF, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("glowing_hellshelf"),
 				new SeashelfItem(ApotheosisObjects.SEASHELF).setRegistryName(ApotheosisObjects.SEASHELF.getRegistryName()),
-				new BlockItem(ApotheosisObjects.CRYSTAL_SEASHELF, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("crystal_seashelf"),
-				new BlockItem(ApotheosisObjects.HEART_SEASHELF, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("heart_seashelf"),
-				new BlockItem(ApotheosisObjects.ENDSHELF, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("endshelf"),
-				new BlockItem(ApotheosisObjects.DRACONIC_ENDSHELF, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("draconic_endshelf"),
-				new BlockItem(ApotheosisObjects.PEARL_ENDSHELF, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("pearl_endshelf"),
-				new BlockItem(ApotheosisObjects.BEESHELF, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("beeshelf"),
-				new BlockItem(ApotheosisObjects.MELONSHELF, new Item.Properties().group(ItemGroup.BUILDING_BLOCKS)).setRegistryName("melonshelf")
+				new BlockItem(ApotheosisObjects.CRYSTAL_SEASHELF, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("crystal_seashelf"),
+				new BlockItem(ApotheosisObjects.HEART_SEASHELF, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("heart_seashelf"),
+				new BlockItem(ApotheosisObjects.ENDSHELF, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("endshelf"),
+				new BlockItem(ApotheosisObjects.DRACONIC_ENDSHELF, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("draconic_endshelf"),
+				new BlockItem(ApotheosisObjects.PEARL_ENDSHELF, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("pearl_endshelf"),
+				new BlockItem(ApotheosisObjects.BEESHELF, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("beeshelf"),
+				new BlockItem(ApotheosisObjects.MELONSHELF, new Item.Properties().group(Apotheosis.APOTH_GROUP)).setRegistryName("melonshelf")
 				);
 		//Formatter::on
 		DispenserBlock.registerDispenseBehavior(shears, DispenserBlock.DISPENSE_BEHAVIOR_REGISTRY.get(oldShears));
@@ -295,7 +327,7 @@ public class EnchModule {
 			return ENCHANTMENT_INFO.computeIfAbsent(ench, e -> new EnchantmentInfo(e, e.getMaxLevel(), e.getMinLevel()));
 		}
 
-		if (enchInfoConfig == null) {
+		if (enchInfoConfig == null) { //Legitimate occurances can now happen, such as when vanilla calls fillItemGroup
 			//LOGGER.error("A mod has attempted to access enchantment information before Apotheosis init, this should not happen.");
 			//Thread.dumpStack();
 			return new EnchantmentInfo(ench, ench.getMaxLevel(), ench.getMinLevel());

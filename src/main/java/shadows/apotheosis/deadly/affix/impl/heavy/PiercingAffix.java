@@ -5,9 +5,7 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.TranslationTextComponent;
 import shadows.apotheosis.deadly.affix.Affix;
-import shadows.apotheosis.deadly.affix.AffixHelper;
 import shadows.apotheosis.deadly.affix.EquipmentType;
 import shadows.apotheosis.deadly.affix.modifiers.AffixModifier;
 
@@ -26,8 +24,7 @@ public class PiercingAffix extends Affix {
 	}
 
 	@Override
-	public float apply(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
-		AffixHelper.addLore(stack, new TranslationTextComponent("affix." + this.getRegistryName() + ".desc"));
+	public float generateLevel(ItemStack stack, Random rand, @Nullable AffixModifier modifier) {
 		return 1;
 	}
 

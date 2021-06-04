@@ -11,7 +11,6 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.item.BookItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.Rarity;
@@ -29,7 +28,7 @@ public class ScrappingTomeItem extends BookItem {
 	static Random rand = new Random();
 
 	public ScrappingTomeItem() {
-		super(new Item.Properties().group(ItemGroup.MISC));
+		super(new Item.Properties().group(Apotheosis.APOTH_GROUP));
 		this.setRegistryName(Apotheosis.MODID, "scrap_tome");
 	}
 
@@ -63,6 +62,7 @@ public class ScrappingTomeItem extends BookItem {
 		for (Enchantment e : keys) {
 			seed ^= e.getRegistryName().hashCode();
 		}
+		seed ^= ev.getPlayer().getXPSeed();
 		rand.setSeed(seed);
 		while (wepEnch.keySet().size() > size) {
 			Enchantment lost = keys.get(rand.nextInt(keys.size()));
@@ -71,7 +71,6 @@ public class ScrappingTomeItem extends BookItem {
 		}
 		ItemStack out = new ItemStack(Items.ENCHANTED_BOOK);
 		EnchantmentHelper.setEnchantments(wepEnch, out);
-		out.setCount(1);
 		ev.setMaterialCost(1);
 		ev.setCost(wepEnch.size() * 10);
 		ev.setOutput(out);

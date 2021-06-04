@@ -40,7 +40,6 @@ import shadows.apotheosis.potion.compat.CuriosCompat;
 import shadows.apotheosis.potion.potions.KnowledgeEffect;
 import shadows.apotheosis.potion.potions.PotionSundering;
 import shadows.placebo.config.Configuration;
-import shadows.placebo.recipe.RecipeHelper;
 
 public class PotionModule {
 
@@ -51,7 +50,7 @@ public class PotionModule {
 
 	@SubscribeEvent
 	public void preInit(ApotheosisConstruction e) {
-		reload(null);
+		this.reload(null);
 		DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
 			FMLJavaModLoadingContext.get().getModEventBus().register(new PotionModuleClient());
 		});
@@ -99,7 +98,6 @@ public class PotionModule {
 		Ingredient res = Apotheosis.potionIngredient(ApotheosisObjects.RESISTANCE);
 		Ingredient regen = Apotheosis.potionIngredient(Potions.STRONG_REGENERATION);
 		Apotheosis.HELPER.addShaped(Items.ENCHANTED_GOLDEN_APPLE, 3, 3, fireRes, regen, fireRes, abs, Items.GOLDEN_APPLE, abs, res, abs, res);
-		RecipeHelper.addRecipe(new PotionCharmRecipe());
 		MinecraftForge.EVENT_BUS.addListener(this::drops);
 		MinecraftForge.EVENT_BUS.addListener(this::xp);
 		MinecraftForge.EVENT_BUS.addListener(this::reload);
@@ -164,7 +162,7 @@ public class PotionModule {
 	public void drops(LivingDropsEvent e) {
 		if (e.getEntityLiving() instanceof RabbitEntity) {
 			RabbitEntity rabbit = (RabbitEntity) e.getEntityLiving();
-			if (rabbit.world.rand.nextFloat() < 0.02F) {
+			if (rabbit.world.rand.nextFloat() < 0.03F + 0.03F * e.getLootingLevel()) {
 				e.getDrops().clear();
 				e.getDrops().add(new ItemEntity(rabbit.world, rabbit.getPosX(), rabbit.getPosY(), rabbit.getPosZ(), new ItemStack(ApotheosisObjects.LUCKY_FOOT)));
 			}

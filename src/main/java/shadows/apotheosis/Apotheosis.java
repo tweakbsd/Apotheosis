@@ -3,6 +3,7 @@ package shadows.apotheosis;
 import java.io.File;
 
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.crafting.Ingredient;
@@ -57,6 +58,14 @@ public class Apotheosis {
 
 	public static final RecipeHelper HELPER = new RecipeHelper(Apotheosis.MODID);
 
+	public static final ItemGroup APOTH_GROUP = new ItemGroup(MODID) {
+
+		@Override
+		public ItemStack createIcon() {
+			return new ItemStack(Items.ENCHANTING_TABLE);
+		}
+	};
+
 	public static File configDir;
 	public static Configuration config;
 	public static boolean enableSpawner = true;
@@ -64,7 +73,7 @@ public class Apotheosis {
 	public static boolean enableDeadly = true;
 	public static boolean enableEnch = true;
 	public static boolean enablePotion = true;
-	public static boolean enableVillager = true;
+	public static boolean enableVillage = true;
 
 	public static float localAtkStrength = 1;
 
@@ -76,20 +85,19 @@ public class Apotheosis {
 		enableGarden = config.getBoolean("Enable Garden Module", "general", true, "If the garden module is loaded.");
 		enableDeadly = config.getBoolean("Enable Deadly Module", "general", true, "If the deadly module is loaded.");
 		enablePotion = config.getBoolean("Enable Potion Module", "general", true, "If the potion module is loaded.");
-		enableVillager = config.getBoolean("Enable Village Module", "general", true, "If the village module is loaded.");
+		enableVillage = config.getBoolean("Enable Village Module", "general", true, "If the village module is loaded.");
 		if (config.hasChanged()) config.save();
 	}
 
 	public Apotheosis() {
 		Affix.classload();
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-
 		if (enableEnch) bus.register(new EnchModule());
 		if (enableSpawner) bus.register(new SpawnerModule());
 		if (enableGarden) bus.register(new GardenModule());
 		if (enableDeadly) bus.register(new DeadlyModule());
 		if (enablePotion) bus.register(new PotionModule());
-		if (enableVillager) bus.register(new VillageModule());
+		if (enableVillage) bus.register(new VillageModule());
 
 		if (config.hasChanged()) config.save();
 		bus.post(new ApotheosisConstruction());

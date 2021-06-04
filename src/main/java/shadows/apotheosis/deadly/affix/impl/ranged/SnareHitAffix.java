@@ -11,9 +11,7 @@ import net.minecraft.potion.Effects;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.RayTraceResult.Type;
-import net.minecraft.util.text.TranslationTextComponent;
 import shadows.apotheosis.deadly.affix.Affix;
-import shadows.apotheosis.deadly.affix.AffixHelper;
 import shadows.apotheosis.deadly.affix.EquipmentType;
 import shadows.apotheosis.deadly.affix.modifiers.AffixModifier;
 
@@ -27,10 +25,9 @@ public class SnareHitAffix extends Affix {
 	}
 
 	@Override
-	public float apply(ItemStack stack, Random rand, AffixModifier modifier) {
+	public float generateLevel(ItemStack stack, Random rand, AffixModifier modifier) {
 		int lvl = 2 + rand.nextInt(5);
 		if (modifier != null) lvl = (int) modifier.editLevel(this, lvl);
-		AffixHelper.addLore(stack, new TranslationTextComponent("affix." + this.getRegistryName() + ".desc", lvl));
 		return lvl;
 	}
 
@@ -44,9 +41,19 @@ public class SnareHitAffix extends Affix {
 		if (type == Type.ENTITY) {
 			Entity hit = ((EntityRayTraceResult) res).getEntity();
 			if (hit instanceof LivingEntity) {
-				((LivingEntity) hit).addPotionEffect(new EffectInstance(Effects.SLOWNESS, 100, 10));
+				((LivingEntity) hit).addPotionEffect(new EffectInstance(Effects.SLOWNESS, 20 * (int) level, 10));
 			}
 		}
+	}
+
+	@Override
+	public float upgradeLevel(float curLvl, float newLvl) {
+		return (int) super.upgradeLevel(curLvl, newLvl);
+	}
+
+	@Override
+	public float obliterateLevel(float level) {
+		return (int) super.obliterateLevel(level);
 	}
 
 	@Override
